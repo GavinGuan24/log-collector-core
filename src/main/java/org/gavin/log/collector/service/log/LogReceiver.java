@@ -1,4 +1,4 @@
-package org.gavin.logCollector.service.log;
+package org.gavin.log.collector.service.log;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

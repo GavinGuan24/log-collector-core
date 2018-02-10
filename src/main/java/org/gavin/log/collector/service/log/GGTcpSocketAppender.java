@@ -1,9 +1,9 @@
-package org.gavin.logCollector.service.log;
+package org.gavin.log.collector.service.log;
 
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import com.alibaba.fastjson.JSON;
-import org.gavin.logCollector.service.log.protocol.LogProtocol;
+import org.gavin.log.collector.service.log.protocol.LogProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
