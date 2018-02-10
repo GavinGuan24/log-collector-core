@@ -1,4 +1,4 @@
-package org.gavin.log.collector.service.log;
+package org.gavin.log.collector.service.log.sender;
 
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.classic.spi.LoggingEvent;
