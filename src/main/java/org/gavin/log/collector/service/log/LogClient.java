@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -27,6 +29,7 @@ public class LogClient implements Runnable {
     private static final long timeoutSecond = 10L;
 
     private static Logger logger = LoggerFactory.getLogger(LogClient.class);
+    private LogReceiver logReceiver;
 
     private Socket clientSocket;
     private InputStream inputStream;
@@ -37,7 +40,8 @@ public class LogClient implements Runnable {
     private boolean first;
     private int period2Client;
 
-    public LogClient(Socket clientSocket) {
+    public LogClient(Socket clientSocket, LogReceiver logReceiver) {
+        this.logReceiver = logReceiver;
         this.clientSocket = clientSocket;
         this.timeout = timeoutSecond * (1000L / periodMilliSecond);
         this.first = true;
@@ -58,7 +62,10 @@ public class LogClient implements Runnable {
             }
             executor = new ScheduledThreadPoolExecutor(1);
             executor.scheduleAtFixedRate(this, 1L, periodMilliSecond, TimeUnit.MILLISECONDS);
-            this.logEater = new LogEater();
+
+            InetSocketAddress remoteSocketAddress = (InetSocketAddress) this.clientSocket.getRemoteSocketAddress();
+            InetAddress inetAddress = remoteSocketAddress.getAddress();
+            this.logEater = new LogEater(inetAddress.getHostAddress(), remoteSocketAddress.getPort(), logReceiver);
             new Thread(this.logEater).start();
             logger.info("异步初始化 LogClient 完成");
         } else {

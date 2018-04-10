@@ -1,5 +1,9 @@
 package org.gavin.log.collector.service.log.protocol;
 
+import com.alibaba.fastjson.JSON;
+import org.gavin.log.collector.service.log.LogDocument;
+import org.gavin.log.collector.service.log.LogReceiver;
+import org.gavin.log.collector.service.log.sender.vo.LoggingEventVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,12 +23,19 @@ import java.util.List;
 public class LogEater implements Runnable {
 
     private static Logger logger = LoggerFactory.getLogger(LogEater.class);
+    private LogReceiver logReceiver;
+
+    private String host;
+    private int port;
 
     private LinkedList<byte[]> queue;
     private byte[] buffer;
     private boolean noLogClient;
 
-    public LogEater() {
+    public LogEater(String host, int port, LogReceiver logReceiver) {
+        this.logReceiver = logReceiver;
+        this.host = host;
+        this.port = port;
         this.queue = new LinkedList<>();
         this.noLogClient = false;
     }
@@ -73,9 +84,9 @@ public class LogEater implements Runnable {
                 }
             }
 
-
             for (String sentence : sentenceList) {
-                logger.info("收到的log" + sentence);
+                LoggingEventVO loggingEventVO = JSON.parseObject(sentence, LoggingEventVO.class);
+                logReceiver.pushLog(new LogDocument(this.host, this.port, loggingEventVO));
             }
         }
     }

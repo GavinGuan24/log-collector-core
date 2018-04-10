@@ -1,11 +1,13 @@
 package org.gavin.log.collector.service.log;
 
+import org.gavin.log.collector.service.log.sender.vo.LoggingEventVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -22,6 +24,9 @@ public class LogReceiver {
 
     private static Logger logger = LoggerFactory.getLogger(LogReceiver.class);
 
+
+    private LinkedList<LogDocument> logBuffer;
+
     private ServerSocket serverSocket;
     private ExecutorService pool;
     private int port;
@@ -37,15 +42,16 @@ public class LogReceiver {
 
     public LogReceiver(int port, int connectionMax) {
         if (port <= 0) port = 5544;
-        if (connectionMax <= 0 || connectionMax > 65535) connectionMax = Runtime.getRuntime().availableProcessors() * 10;
+        if (connectionMax <= 0 || connectionMax > 20000) connectionMax = Runtime.getRuntime().availableProcessors() * 10;
         this.port = port;
         this.pool = Executors.newFixedThreadPool(connectionMax);
+        this.logBuffer = new LinkedList<>();
     }
 
     public void startupListener() throws IOException {
         if (available()) return;
         this.serverSocket = new ServerSocket(this.port);
-        new Thread( () -> runLoop() ).start();
+        new Thread(this::runLoop).start();
         logger.info("LogReceiver 监听开启");
     }
 
@@ -73,6 +79,18 @@ public class LogReceiver {
         return port;
     }
 
+    public boolean logBufferIsEmpty() {
+        return logBuffer.size() == 0;
+    }
+
+    public void pushLog(LogDocument logDocument) {
+        logBuffer.add(logDocument);
+    }
+
+    public LogDocument pollLog() {
+        return logBuffer.poll();
+    }
+
     private void runLoop() {
         while (true) {
             try {
@@ -80,7 +98,7 @@ public class LogReceiver {
                 logger.debug("等待下一个client");
                 Socket clientSocket = this.serverSocket.accept();
                 logger.debug("收到一个client");
-                pool.execute(new LogClient(clientSocket));
+                pool.execute(new LogClient(clientSocket, this));
             } catch (Exception e) {
                 e.printStackTrace();
             }
