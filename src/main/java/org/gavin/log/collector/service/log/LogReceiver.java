@@ -51,20 +51,20 @@ public class LogReceiver {
 
     public void startupListener() throws IOException {
         if (available()) return;
-        this.serverSocket = new ServerSocket(this.port);
+        serverSocket = new ServerSocket(port);
         new Thread(this::runLoop).start();
         logger.info("LogReceiver 监听开启");
     }
 
     public void closeListener() throws IOException {
         if (!available()) return;
-        this.serverSocket.close();
+        serverSocket.close();
         logger.info("LogReceiver 监听停用");
     }
 
     public void shutdown() throws IOException {
-        if (this.serverSocket != null && !this.serverSocket.isClosed()) {
-            this.serverSocket.close();
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            serverSocket.close();
         }
         if (!pool.isShutdown()) {
             pool.shutdown();
@@ -73,7 +73,7 @@ public class LogReceiver {
     }
 
     public boolean available() {
-        return this.serverSocket != null && !this.serverSocket.isClosed() && !pool.isShutdown();
+        return serverSocket != null && !serverSocket.isClosed() && !pool.isShutdown();
     }
 
     public int getPort() {
@@ -95,9 +95,9 @@ public class LogReceiver {
     private void runLoop() {
         while (true) {
             try {
-                if (this.serverSocket.isClosed()) break;
+                if (serverSocket.isClosed()) break;
                 logger.debug("等待下一个client");
-                Socket clientSocket = this.serverSocket.accept();
+                Socket clientSocket = serverSocket.accept();
                 logger.debug("收到一个client");
                 pool.execute(new LogClient(clientSocket, this));
             } catch (Exception e) {

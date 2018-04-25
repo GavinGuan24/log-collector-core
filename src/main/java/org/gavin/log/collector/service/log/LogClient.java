@@ -46,7 +46,7 @@ public class LogClient implements Runnable {
         this.clientSocket = clientSocket;
         this.timeout = defaultTimeout();
         this.first = true;
-        heartbeat2Client = 0;
+        this.heartbeat2Client = 0;
     }
 
     @Override
@@ -71,6 +71,13 @@ public class LogClient implements Runnable {
             logger.info("异步初始化 LogClient 完成");
         } else {
             logger.debug("heartbeat");
+            
+            if (!logReceiver.available()) {
+                logger.info("LogReceiver 停止监听, 主动停用自身");
+                shutdown();
+                return;
+            }
+
             heartbeat2Client++;
             if (heartbeat2Client == heartbeat2ClientMilliSecond / periodMilliSecond) heartbeat2Client = 0;
 
