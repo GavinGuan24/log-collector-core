@@ -23,9 +23,10 @@ public class LogReceiver {
 
     private static Logger logger = LoggerFactory.getLogger(LogReceiver.class);
 
-    //这个队列类使用CAS算法, 多线程问题可以应对, 无需考虑极端的ABA, 因为出队列仅是单线程, 入队列才是多线程
+    //这个队列类使用CAS算法, 多线程问题可以应对, 无需考虑极端的ABA
     //如果以后有BUG, 可以考虑悲观锁list1 = collections.synchronized(list0) -> synchronized(list1) {}
-    //ConcurrentLinkedQueue 的 size() 方法比较耗时, 但我也想控制ta的内容量, 不知道如何是好
+    //ConcurrentLinkedQueue 的 size() 方法比较耗时, 但我也想控制ta的内容量, 暂时没有什么好的想法
+    //你想, 如果外界没有持续消耗logBuffer, 而客户端一直都有log传过来, 最终一定会内存溢出的
     private ConcurrentLinkedQueue<LogDocument> logBuffer;
 
     private ServerSocket serverSocket;

@@ -86,7 +86,7 @@ public class LogEater implements Runnable {
 
             for (String sentence : sentenceList) {//将本次run()得出的可分句的数据, 交给老大处理
                 LoggingEventVO loggingEventVO = JSON.parseObject(sentence, LoggingEventVO.class);
-                logReceiver.pushLog(new LogDocument(this.host, this.port, loggingEventVO));
+                logReceiver.pushLog(new LogDocument(host, port, loggingEventVO));
             }
         }
     }
@@ -96,7 +96,7 @@ public class LogEater implements Runnable {
     }
 
     public void shouldStop() {
-        this.noLogClient = true;
+        noLogClient = true;
     }
 
     //--------------------------------------------------------------

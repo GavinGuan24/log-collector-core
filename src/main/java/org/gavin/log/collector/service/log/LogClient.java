@@ -71,7 +71,7 @@ public class LogClient implements Runnable {
             logger.info("异步初始化 LogClient 完成");
         } else {
             logger.debug("heartbeat");
-            
+
             if (!logReceiver.available()) {
                 logger.info("LogReceiver 停止监听, 主动停用自身");
                 shutdown();
@@ -93,7 +93,7 @@ public class LogClient implements Runnable {
                     readInputStream();
                 } else {
                     //客户端会对LogClient发送心跳, 所以没有任何消息的客户端, 将其可容许超时计数减一
-                    timeout = timeout - 1;
+                    timeout -= 1;
                 }
                 if (heartbeat2Client == 0) {
                     //每过 heartbeat2ClientMilliSecond 时长, 发送一个心跳给客户端
