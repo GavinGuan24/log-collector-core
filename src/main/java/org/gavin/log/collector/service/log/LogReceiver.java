@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,7 +23,10 @@ public class LogReceiver {
 
     private static Logger logger = LoggerFactory.getLogger(LogReceiver.class);
 
-    private ConcurrentLinkedQueue<LogDocument> logBuffer;//线程不安全
+    //这个队列类使用CAS算法, 多线程问题可以应对, 无需考虑极端的ABA, 因为出队列仅是单线程, 入队列才是多线程
+    //如果以后有BUG, 可以考虑悲观锁list1 = collections.synchronized(list0) -> synchronized(list1) {}
+    //ConcurrentLinkedQueue 的 size() 方法比较耗时, 但我也想控制ta的内容量, 不知道如何是好
+    private ConcurrentLinkedQueue<LogDocument> logBuffer;
 
     private ServerSocket serverSocket;
     private ExecutorService pool;
