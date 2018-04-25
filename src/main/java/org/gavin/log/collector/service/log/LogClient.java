@@ -25,8 +25,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class LogClient implements Runnable {
 
-    private static final long periodMilliSecond = 200L;
-    private static final long timeoutSecond = 10L;
+    private static final long periodMilliSecond = 200L;//初始化后, 执行run()的周期
+    private static final long heartbeat2ClientMilliSecond = 1000L;//对客户端心跳的时间, 应是periodMilliSecond的整数倍
+    private static final long timeoutSecond = 10L;//客户端无响应的超时时长
 
     private static Logger logger = LoggerFactory.getLogger(LogClient.class);
     private LogReceiver logReceiver;
@@ -38,14 +39,14 @@ public class LogClient implements Runnable {
     private LogEater logEater;
     private long timeout;
     private boolean first;
-    private int period2Client;
+    private int heartbeat2Client;
 
     public LogClient(Socket clientSocket, LogReceiver logReceiver) {
         this.logReceiver = logReceiver;
         this.clientSocket = clientSocket;
-        this.timeout = timeoutSecond * (1000L / periodMilliSecond);
+        this.timeout = defaultTimeout();
         this.first = true;
-        period2Client = 0;
+        heartbeat2Client = 0;
     }
 
     @Override
@@ -70,8 +71,8 @@ public class LogClient implements Runnable {
             logger.info("异步初始化 LogClient 完成");
         } else {
             logger.debug("heartbeat");
-            period2Client++;
-            if (period2Client == 1000L / periodMilliSecond) period2Client = 0;
+            heartbeat2Client++;
+            if (heartbeat2Client == heartbeat2ClientMilliSecond / periodMilliSecond) heartbeat2Client = 0;
 
             if (timeout == 0) {
                 logger.error("LogClient 心跳超时, 主动停用自身");
@@ -81,12 +82,14 @@ public class LogClient implements Runnable {
 
             try {
                 if (inputStream.available() > 0) {
-                    timeout = timeoutSecond * (1000L / periodMilliSecond);
+                    timeout = defaultTimeout();
                     readInputStream();
                 } else {
+                    //客户端会对LogClient发送心跳, 所以没有任何消息的客户端, 将其可容许超时计数减一
                     timeout = timeout - 1;
                 }
-                if (period2Client == 0) {
+                if (heartbeat2Client == 0) {
+                    //每过 heartbeat2ClientMilliSecond 时长, 发送一个心跳给客户端
                     outputStream.write(LogProtocol.heartbeatMsg());
                     logger.debug("对 client 心跳");
                 }
@@ -101,6 +104,10 @@ public class LogClient implements Runnable {
 
 
         }
+    }
+
+    private static long defaultTimeout() {
+        return timeoutSecond * (heartbeat2ClientMilliSecond / periodMilliSecond);
     }
 
     private void readInputStream() throws Exception {
@@ -130,7 +137,7 @@ public class LogClient implements Runnable {
         }
         logEater.shouldStop();
         executor.shutdown();
-        period2Client = 0;
+        heartbeat2Client = 0;
         try {
             inputStream.close();
         } catch (Exception e) {

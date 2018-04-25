@@ -1,6 +1,5 @@
 package org.gavin.log.collector.service.log;
 
-import org.gavin.log.collector.service.log.sender.vo.LoggingEventVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,6 +7,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -24,8 +24,7 @@ public class LogReceiver {
 
     private static Logger logger = LoggerFactory.getLogger(LogReceiver.class);
 
-
-    private LinkedList<LogDocument> logBuffer;
+    private ConcurrentLinkedQueue<LogDocument> logBuffer;//线程不安全
 
     private ServerSocket serverSocket;
     private ExecutorService pool;

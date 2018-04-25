@@ -42,25 +42,25 @@ public class LogEater implements Runnable {
 
     @Override
     public void run() {
-        while (!(queue.size() == 0 && noLogClient)) {
+        while (!(queue.size() == 0 && noLogClient)) {//仅当被外界告知没有可处理的客户端了, 同时队列也没有未处理完的数据时, 才退出, 不考虑 this.buffer
 
             byte[] nextBytes = queue.poll();
             if (nextBytes == null) continue;
-            if (buffer != null) {
+            if (buffer != null) {//如果上次run()有未处理完的数据, 将上次的于本次数据包拼接在在一起处理
                 nextBytes = bufferAppendNextBytes(buffer, nextBytes);
                 buffer = null;
             }
 
-            List<Byte> newBuffer = new ArrayList<>();
+            List<Byte> tempBuffer = new ArrayList<>();
 
             List<String> sentenceList = new ArrayList<>();
 
             for (byte byte0 : nextBytes) {
                 if (byte0 == 3) {
-                    //分句操作
-                    byte[] bytes = new byte[newBuffer.size()];
-                    for (int i = 0; i < newBuffer.size(); i++) {
-                        bytes[i] = newBuffer.get(i);
+                    //ASCII码为3, 分句操作
+                    byte[] bytes = new byte[tempBuffer.size()];
+                    for (int i = 0; i < tempBuffer.size(); i++) {
+                        bytes[i] = tempBuffer.get(i);
                     }
                     String sentence = null;
                     try {
@@ -68,23 +68,23 @@ public class LogEater implements Runnable {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    newBuffer.clear();
-                    if (sentence == null) continue;
-                    if (sentence.equals(LogProtocol.HeartbeatIdentify)) continue;
+                    tempBuffer.clear();
+                    if (sentence == null) continue;//如果是空句, 跳过本次
+                    if (sentence.equals(LogProtocol.HeartbeatIdentify)) continue;//如果是心跳语句, 跳过本次
                     sentenceList.add(sentence);
                 } else {
-                    newBuffer.add(byte0);
+                    tempBuffer.add(byte0);
                 }
             }
 
-            if (newBuffer.size() > 0) {
-                buffer = new byte[newBuffer.size()];
-                for (int i = 0; i < newBuffer.size(); i++) {
-                    buffer[i] = newBuffer.get(i);
+            if (tempBuffer.size() > 0) {//将本次未处理完的数据交给下一次run()处理
+                buffer = new byte[tempBuffer.size()];
+                for (int i = 0; i < tempBuffer.size(); i++) {
+                    buffer[i] = tempBuffer.get(i);
                 }
             }
 
-            for (String sentence : sentenceList) {
+            for (String sentence : sentenceList) {//将本次run()得出的可分句的数据, 交给老大处理
                 LoggingEventVO loggingEventVO = JSON.parseObject(sentence, LoggingEventVO.class);
                 logReceiver.pushLog(new LogDocument(this.host, this.port, loggingEventVO));
             }
