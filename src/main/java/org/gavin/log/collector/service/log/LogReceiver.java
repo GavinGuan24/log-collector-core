@@ -44,7 +44,7 @@ public class LogReceiver {
         if (connectionMax <= 0 || connectionMax > 20000) connectionMax = Runtime.getRuntime().availableProcessors() * 10;
         this.port = port;
         this.pool = Executors.newFixedThreadPool(connectionMax);
-        this.logBuffer = new LinkedList<>();
+        this.logBuffer = new ConcurrentLinkedQueue<>();
     }
 
     public void startupListener() throws IOException {
