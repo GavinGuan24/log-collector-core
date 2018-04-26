@@ -44,7 +44,7 @@ public class LogReceiver {
 
     public LogReceiver(int port, int connectionMax) {
         if (port <= 0) port = 5544;
-        if (connectionMax <= 0 || connectionMax > 20000) connectionMax = Runtime.getRuntime().availableProcessors() * 10;
+        if (connectionMax <= 0 || connectionMax > 5000) connectionMax = Runtime.getRuntime().availableProcessors() * 10;
         this.port = port;
         this.pool = Executors.newFixedThreadPool(connectionMax);
         this.logBuffer = new ConcurrentLinkedQueue<>();
