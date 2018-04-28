@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -81,16 +83,31 @@ public class LogReceiver {
         return port;
     }
 
-    public boolean logBufferIsEmpty() {
-        return logBuffer.size() == 0;
-    }
-
     public void pushLog(LogDocument logDocument) {
         logBuffer.add(logDocument);
     }
 
-    public LogDocument pollLog() {
-        return logBuffer.poll();
+    /**
+     * logBuffer 是一个 ConcurrentLinkedQueue, 其 size() 方法是遍历计算, 尽量少用该方法
+     * @return 当前logBuffer是否为空
+     */
+    public boolean logBufferIsEmpty() {
+        return logBuffer.size() == 0;
+    }
+
+    /**
+     * 获取最多 size 个 LogDocument
+     * @param size 打算获取 size 个 LogDocument
+     * @return List<LogDocument>
+     */
+    public List<LogDocument> pollLogs(int size) {
+        List<LogDocument> logDocumentList = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            LogDocument logDocument = logBuffer.poll();
+            if (logDocument != null)
+                logDocumentList.add(logDocument);
+        }
+        return logDocumentList;
     }
 
     private void runLoop() {
