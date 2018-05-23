@@ -1,10 +1,10 @@
-#log-collector-core
+# log-collector-core
 
 log-collector-core is a implementation of log collector for spring and logback framework.
 
-###简介
+### 简介
 **log-collector-core** 是一个小型日志收集框架, 基于TCP链接, 实现了 **LogReceiver** 与 **GGTcpSocketAppender** 这两个类.
-###注: **log-collector-core** 并不是完整解决方案, 没有实现对接收到的日志数据的 分类、持久化、查询
+### 注: **log-collector-core** 并不是完整解决方案, 没有实现对接收到的日志数据的 分类、持久化、查询
 
 -  **LogReceiver** 负责接收日志
 -  **GGTcpSocketAppender** 负责发送日志, 支持自动重连
@@ -15,7 +15,7 @@ log-collector-core is a implementation of log collector for spring and logback f
 ### 1. LogReceiver
 #### 1.1 Spring Boot 中使用
 
-#####1.1.1 **LogReceiver** 注入 **Spring** 环境
+##### 1.1.1 **LogReceiver** 注入 **Spring** 环境
 
 ```java
 @Configuration
