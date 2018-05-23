@@ -1,4 +1,4 @@
-package org.gavin.logCollector.service.log.protocol;
+package org.gavin.log.collector.service.log.protocol;
 
 /**
  * ---------------------------------------------------
@@ -25,11 +25,11 @@ public class LogProtocol {
 
     private static byte[] appendEndByte(byte[] source) {
         if (source == null || source.length == 0) {
-            source = new byte[]{32};
+            source = new byte[]{32};//无效参数, 将信息改写为一个空格
         }
         byte[] target = new byte[source.length + 1];
         System.arraycopy(source, 0, target, 0, source.length);
-        target[source.length] = 3;
+        target[source.length] = 3;//最后一位ASCII码为3, ETX, 文本结束
         return target;
     }
 

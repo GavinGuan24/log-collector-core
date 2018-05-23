@@ -1,15 +1,23 @@
-package org.gavin.logCollector.service.log;
+package org.gavin.log.collector.service.log.sender;
 
+import org.gavin.log.collector.service.log.sender.vo.Caller;
+import org.gavin.log.collector.service.log.sender.vo.LoggingEventVO;
+import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import com.alibaba.fastjson.JSON;
-import org.gavin.logCollector.service.log.protocol.LogProtocol;
+import org.gavin.log.collector.service.log.protocol.LogProtocol;
+import org.gavin.log.collector.service.log.sender.vo.throwable.StackTraceElementVO;
+import org.gavin.log.collector.service.log.sender.vo.throwable.ThrowableProxyVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -155,12 +163,63 @@ public class GGTcpSocketAppender extends AppenderBase implements Runnable {
     //--------------------------------------------------------------
 
     private void eatLog(LoggingEvent event) {
-//        String temp = "模拟log" + (System.currentTimeMillis() % 1000);// + event.getMessage();
 
-        String temp = JSON.toJSONString(event);
+        LoggingEventVO loggingEventVO = new LoggingEventVO();
+        ThrowableProxy throwableProxy = (ThrowableProxy) event.getThrowableProxy();
+
+        if (throwableProxy != null) {
+            //含异常代理, 主信息处理
+            ThrowableProxyVO throwableProxyVO = new ThrowableProxyVO();
+            throwableProxyVO.setClassName(throwableProxy.getClassName());
+            throwableProxyVO.setMessage(throwableProxy.getMessage());
+
+            StackTraceElementProxy[] stackTraceElementProxies = throwableProxy.getStackTraceElementProxyArray();
+            List<StackTraceElementVO> stackTraceElementVOList = new ArrayList<>(6);
+            //最多向上追溯6个堆信息, 直接拼接最多3个堆信息至LoggingEventVO.message
+            int StackTraceElementProxyArraySize = stackTraceElementProxies.length;
+            if (StackTraceElementProxyArraySize > 6) StackTraceElementProxyArraySize = 6;
+
+            StringBuilder stackTraceMsgSB = new StringBuilder("\n\tstackTraceMsg ===>\n");
+
+            for (int i = 0; i < StackTraceElementProxyArraySize; i++) {
+                StackTraceElementProxy eProxy = stackTraceElementProxies[i];
+                StackTraceElement ste = eProxy.getStackTraceElement();
+                if (i < 3) {
+                    stackTraceMsgSB.append("{class:");
+                    stackTraceMsgSB.append(ste.getClassName());
+                    stackTraceMsgSB.append(".");
+                    stackTraceMsgSB.append(ste.getMethodName());
+                    stackTraceMsgSB.append(" file:");
+                    stackTraceMsgSB.append(ste.getFileName());
+                    stackTraceMsgSB.append("@");
+                    stackTraceMsgSB.append(ste.getLineNumber());
+                    stackTraceMsgSB.append("}\n");
+                }
+                stackTraceElementVOList.add(new StackTraceElementVO(ste));
+            }
+            throwableProxyVO.setStackTraceElementList(stackTraceElementVOList);
+
+            loggingEventVO.setThrowableProxyVO(throwableProxyVO);
+            loggingEventVO.setMessage("["+ throwableProxy.getClassName() + ": " + throwableProxy.getMessage() +"]" + stackTraceMsgSB.toString());
+        } else {
+            //不含异常代理, 主信息处理
+            loggingEventVO.setMessage(event.getMessage());
+        }
+
+        loggingEventVO.setTimeStamp(event.getTimeStamp());
+        loggingEventVO.setLoggerName(event.getLoggerName());
+        loggingEventVO.setThreadName(event.getThreadName());
+
+        StackTraceElement[] stackTraceElementArray = event.getCallerData();
+        List<Caller> callerList = new ArrayList<>();
+        for (StackTraceElement ste : stackTraceElementArray) {
+            Caller caller = new Caller(ste);
+            callerList.add(caller);
+        }
+        loggingEventVO.setCallerList(callerList);
 
         try {
-            outputStream.write(LogProtocol.appendEndByte(temp));
+            outputStream.write(LogProtocol.appendEndByte(JSON.toJSONString(loggingEventVO)));
         } catch (Exception e) {
             e.printStackTrace();
             //无法发送 Log, 重置链接
