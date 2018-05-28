@@ -3,7 +3,7 @@
 log-collector-core is a implementation of log collector for spring and logback framework.
 
 ### 简介
-**log-collector-core** 是一个小型日志收集框架, 基于TCP链接, 实现了 **LogReceiver** 与 **GGTcpSocketAppender** 这两个类.
+**log-collector-core** 是一个小型日志收集框架, 基于TCP链接, 应用在**spring**与**logback**中, 实现了 **LogReceiver** 与 **GGTcpSocketAppender** 这两个类.
 
 **注**: **log-collector-core** 并不是完整解决方案, 只是**log-collector**的核心逻辑, 完整解决方案请关注我的个人开源项目**log-collector**, 
 但是我还没自测之前, 不想上传到github.
@@ -74,7 +74,42 @@ public class App {
 
 ```
 
-至此, 日志的接收功能已经完成
+#### 1.2 spring mvc 中使用
+和 1.1 spring boot 中使用基本相似, 只不过老框架需要配置在 **```spring*.xml```** 文件中, 在此不做过多解释, 老鸟应该自己知道怎么搞
+
+
+###### 至此, 日志的接收功能已经完成(暂时未编写自定义配置文件, 后续版本中会加入), 接下来是日志的发送
+
+### 2. GGTcpSocketAppender
+使用过**logback**的都知道有个配置文件 **```logback.xml```** 或者 **```logback-spring.xml```**,
+命名不同, 会有一些不同之处, 在此不做赘述
+主要说明一下 **logback** 配置文件中, 加入**GGTcpSocketAppender** 
+#### 2.1 configuration 节点下, 增加一个 appender 节点
+
+```xml
+<!--host当然就是收集该值日的服务器ip, port当然就是定义好的端口, timeoutSecond是对方无应答的超时时间-->
+<appender name="GG" class="org.gavin.log.collector.service.log.sender.GGTcpSocketAppender">
+    <host>${logCollectorHost}</host>
+    <port>${logCollectorPort}</port>
+    <timeoutSecond>${logCollectorTimeoutSecond}</timeoutSecond>
+</appender>
+
+```
+#### 2.2 root 节点下加一个对刚才appender的引用
+```xml
+<root level="${logLevel}">
+    <appender-ref ref="console" /> <!--这两个就是最常用的控制台输出与日志文件输出, 如果不需要, 你也可以不配置-->
+    <appender-ref ref="file" /> 
+    
+    <appender-ref ref="GG" /> <!--这里就是对 GGTcpSocketAppender 的引用-->
+</root>
+```
+
+
+至此, 即是对 **log-collector-core** 的使用描述, 可能不够详细, 日后我的 **log-collector** 会公开, 你可以看到源码中对 **log-collector-core** 的使用
+
+
+
 
 待续...
 
