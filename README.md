@@ -106,7 +106,7 @@ public class App {
 ```
 
 
-至此, 即是对 **log-collector-core** 的使用描述, 可能不够详细, 日后我的 **log-collector** 会公开, 你可以看到源码中对 **log-collector-core** 的使用
+至此, 即是对 **log-collector-core** 的使用描述, 可能不够详细, 我的 **log-collector** 预览版已公开, 你可以看到源码中对 **log-collector-core** 的使用
 
 
 
