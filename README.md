@@ -2,6 +2,8 @@
 
 log-collector-core is a implementation of log collector for spring and logback framework.
 
+该项目已视为我巩固java网络编程的学习项目, 性能不佳, 已停止维护.
+
 ### 简介
 **log-collector-core** 是一个小型日志收集框架, 基于TCP链接, 应用在**spring**与**logback**中, 实现了 **LogReceiver** 与 **GGTcpSocketAppender** 这两个类.
 
